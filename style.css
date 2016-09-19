@@ -163,6 +163,12 @@
     -ms-transition: left 400ms linear 0s;
     transition: left 400ms linear 0s;
   }
+  section.no-transition {
+    -moz-transition: none;
+    -webkit-transition: none;
+    -ms-transition: none;
+    transition: none;
+  }
   .view section {
     -moz-transition: none;
     -webkit-transition: none;
@@ -207,6 +213,11 @@
 
 .servlet-container{
   width:98%;
-  background:red;
   margin:7% 0 7% 1.5%
 }
+
+.net-in-one-minute{
+  width:55%;
+  margin: 5%;
+}
+.center{text-align: center;}
