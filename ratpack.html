@@ -6,19 +6,20 @@
 
 <section>
     <img src="ratpack-logo.png" alt="ratpack" class="logo" />
+    <span class="name">Peter Jurkovic</span>
 </section>
 
 <section>
-    <h3>Summary</h3>
+    <h3>Agenda</h3>
     <ul>
       <li>Motivation
       <li>Ratpack
         <ul>
-          <li> Request handling
+          <li> Key concepts
           <li> Application configuration
           <li> Test capabilities
-          <li> Ratpack Modules
           <li> Promises and Executions 
+          <li> Ratpack Modules
         </ul>
         <li> Reactive Streams
     </ul>
@@ -69,14 +70,42 @@
 <section>
     <h3>Ratpack</h3>
     <ul>
-      <li>Born 20 years ago and still alive!
-      <li>Simple &amp; effective processing model
-      <li>Request isolation
-      <li>But ... 
+      <li>High-performance, reactive web framework
+      <li>Build on Java 8 and Netty
+      <li>Using asynchronous non-blocking model
+      <li>Rapid develompent
+      <li>Aims to make async programiring on JVM easier
     </ul>
 </section>
 
-<!-- Maybe a font from http://www.google.com/webfonts ? -->
+<section>
+    <h3>Ratpack - Hello, Nexmo!</h3>
+    <div class="code highlight">
+    <pre><code class="java">@Grab('io.ratpack:ratpack-groovy:1.4.2') <span class="numb" >1</span>
+
+import static ratpack.groovy.Groovy.ratpack; <span class="numb" >2</span>
+
+ratpack {
+  handlers {
+    get { <span class="numb" >3</span>
+      render "Hello, Nexmo!"
+    }
+  }
+}</code></pre>
+    </div>
+    
+    <div class="ul"> 
+      <span class="li"><span class="li-numb">1</span>Groovy's dependency managment system "grab" the necessary dependencies and maie it avaiable to our runtime classpath</span>
+      <span class="li"><span class="li-numb">2</span>Static import of the Groovy.ratpack method provides our script with the Domain-Specific Languages (DSL)</span>
+      <span class="li"><span class="li-numb">3</span>GET handler - binding a processing block for incoming HTTP GET requests</span>
+    </div>
+
+</section>
+
+
+
+<link rel="stylesheet" href="highlight/styles/default.css">
+<script src="highlight/highlight.pack.js"></script>
 <link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet'>
 <link href='style.css' rel='stylesheet'>
 <div id="progress-bar"></div>
@@ -488,6 +517,6 @@
   $$.forEach = function(nodeList, fun) {
     Array.prototype.forEach.call(nodeList, fun);
   }
-
+  hljs.initHighlightingOnLoad();
 </script>
 <!-- vim: set fdm=marker: }}} -->

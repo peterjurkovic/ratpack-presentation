@@ -210,6 +210,12 @@
     display:block;
     width:40%;
   }
+  .name{
+    position: absolute;
+    top:55%;
+    left:58%;
+    font-size: 12px;
+  }
 
 .servlet-container{
   width:105%;
@@ -234,4 +240,34 @@
     background-repeat:   no-repeat;
     background-position: center center;       
   }
+code{
+  font-size: 13px;
+}
+pre{
+  margin:0 5% 0 10%;
+}
 
+.numb,.li-numb{
+  display:inline-block;
+  background: #F2D600;
+  text-align:center;
+  border-radius:50%;
+}
+
+.numb{
+  width: 20px;
+  height: 20px;
+  margin-top:-10px !important;
+  margin-bottom:-10px !important;
+}
+
+.li-numb{
+  width: 24px;
+  height: 24px;
+  position:absolute;
+  top:0;
+  left:-32px;
+}
+
+.ul{margin:5% 5% 0 14%;font-size:0.5em}
+.li{position:relative;display:block;margin:5px 0; }
