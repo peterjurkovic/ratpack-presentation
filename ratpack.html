@@ -79,7 +79,7 @@
 </section>
 
 <section>
-    <h3>Ratpack - Hello, Nexmo!</h3>
+    <h3>Ratpack - Hello Nexmo!</h3>
     <div class="code highlight">
     <pre><code class="java">@Grab('io.ratpack:ratpack-groovy:1.4.2') <span class="numb" >1</span>
 
@@ -88,7 +88,7 @@ import static ratpack.groovy.Groovy.ratpack; <span class="numb" >2</span>
 ratpack {
   handlers {
     get { <span class="numb" >3</span>
-      render "Hello, Nexmo!"
+      render "Hello Nexmo!"
     }
   }
 }</code></pre>
@@ -102,6 +102,46 @@ ratpack {
 
 </section>
 
+<section>
+    <h3>Ratpack - Handler Chain</h3>
+
+    <ul class="small">
+      <li class="bigger"> Handler is a "core" object in Ratpack
+      <li class="bigger"> Acts on a Context - can delegate or can add some new handlers
+      <li class="bigger"> Processed top-down (Order matters)
+    </ul>
+    <pre><code class="java">public class HelloNexmoHandler implements Handler{
+
+  @Override
+  public void handle(Context ctx) throws Exception {
+    ctx.render("Hello Nexmo!");
+  }
+
+}</code></pre>
+</section>
+
+<section>
+    <h3>Ratpack - Handler Chain (Continued)</h3>
+
+    <ul class="small">
+      <li class="bigger"> Handler is a "core" object in Ratpack
+    </ul>
+    <pre><code class="java">public class Server {
+  
+  public static void main(String[] args) throws Exception {
+    RatpackServer.start( serverSpec -> serverSpec
+        .handlers( chain -> chain
+          .all( ctx -> {
+           // handles all requests
+           ctx.next();
+          })
+          .get( new HelloNexmoHandler() )
+      ) 
+    );
+  }
+  
+}</code></pre>
+</section>
 
 
 <link rel="stylesheet" href="highlight/styles/default.css">
