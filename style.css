@@ -278,5 +278,10 @@ pre{
   margin-right: 0;
 }
 .small li.bigger{
-  line-height: 2.5em;
+  line-height: 2.0em;
 }
+
+.inline code{font-size:0.9em;margin-left:0.2em;}
+
+.reduce-margin{margin-top:-3% !important}
+.reduce-margin{margin-bottom:3% !important}

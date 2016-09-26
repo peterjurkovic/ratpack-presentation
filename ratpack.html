@@ -103,12 +103,35 @@ ratpack {
 </section>
 
 <section>
-    <h3>Ratpack - Handler Chain</h3>
-
+    <h3> Handler Chain</h3>
     <ul class="small">
       <li class="bigger"> Handler is a "core" object in Ratpack
-      <li class="bigger"> Acts on a Context - can delegate or can add some new handlers
+      <li class="bigger"> Acts on a Context - can handle, delegate or add some new handlers
       <li class="bigger"> Processed top-down (Order matters)
+    </ul>
+     <pre><code class="java">public class Server {
+  
+  public static void main(String[] args) throws Exception {
+    RatpackServer.start( serverSpec -> serverSpec
+        .handlers( chain -> chain
+          .get( ctx -> {
+            ctx.render("Hello Nexmo!");
+          })
+      ) 
+    );
+  }
+  
+}</code></pre>
+
+
+</section>
+
+<section>
+    <h3>Handler Chain (Continued)</h3>
+    <ul class="small">
+      <li class="bigger"> Can be defined to match on HTTP verb, URL or Content-Type </li>
+      <li class="bigger"> Just a simple <span class="inline"><code>@FunctionalInterface</code></span> </li>
+      <li class="bigger"> Supports decoupling the rendering logic by implementing <span class="inline"><code>Renderer&lt;T&gt;</code></span></li>
     </ul>
     <pre><code class="java">public class HelloNexmoHandler implements Handler{
 
@@ -121,26 +144,53 @@ ratpack {
 </section>
 
 <section>
-    <h3>Ratpack - Handler Chain (Continued)</h3>
-
-    <ul class="small">
-      <li class="bigger"> Handler is a "core" object in Ratpack
+    <h3>Handler method binding</h3>
+     <ul class="small reduce-margin">
+      <li class="bigger"> byMethod - for HTTP method </li>
+      <li class="bigger"> byContent - for MIME types </li>
+      <li class="bigger"> Easy &amp; descriptive way how to build up REST api </li>
     </ul>
-    <pre><code class="java">public class Server {
-  
-  public static void main(String[] args) throws Exception {
-    RatpackServer.start( serverSpec -> serverSpec
-        .handlers( chain -> chain
-          .all( ctx -> {
-           // handles all requests
-           ctx.next();
-          })
-          .get( new HelloNexmoHandler() )
-      ) 
-    );
-  }
-  
-}</code></pre>
+     <pre><code class="java">handlers {
+    prefix("api") {
+        all { ... }
+        delete { ... }
+        post { ... }
+        put { ... }
+        patch { ... }
+        get (":id") { 
+          byContent {
+            html { ... }
+            json { ... }
+            xml { ... }
+            noMatch { ... }
+          }
+        }
+    }
+}
+</code></pre>
+</section>
+
+<section>
+    <h3>Registries</h3>
+     <ul class="small  reduce-margin">
+      <li class="bigger"> Chain is backed by registry</li>
+      <li class="bigger"> "Map like type" where Key is a type and Value an instance</li>
+      <li class="bigger"> Can be layered or "Joined"</li>
+      <li class="bigger"> Provide "sort of" dependency injection</li>
+      <li class="bigger"> Something like ApplicationContext in Spring</li>
+    </ul>
+    <pre><code class="java">handlers( chain -> chain
+  .all( ctx -> {
+    String userAgent = ctx.getRequest().getHeaders().get("User-Agent");
+    ClientVersion clientVersion = ClientVersion.ofUserAgent(userAgent);
+    ctx.next(Registry.single(clientVersion));
+  })
+  .get( ctx -> {
+    ClientVersion clientVersion = ctx.get(ClientVersion.class);
+  })
+)
+</code></pre>
+
 </section>
 
 
