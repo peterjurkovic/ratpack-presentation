@@ -176,7 +176,6 @@ ratpack {
       <li class="bigger"> Chain is backed by registry</li>
       <li class="bigger"> "Map like type" where Key is a type and Value an instance</li>
       <li class="bigger"> Can be layered or "Joined"</li>
-      <li class="bigger"> Provide "sort of" dependency injection</li>
       <li class="bigger"> Something like ApplicationContext in Spring</li>
     </ul>
     <pre><code class="java">handlers( chain -> chain
@@ -187,11 +186,61 @@ ratpack {
   })
   .get( ctx -> {
     ClientVersion clientVersion = ctx.get(ClientVersion.class);
+    // ...
   })
 )
 </code></pre>
 
 </section>
+
+<section>
+    <h3>Dependency injection</h3>
+     <ul class="small  reduce-margin">
+      <li class="bigger"> Ratpack itself provides "sort of" DI</li>
+      <li class="bigger"> Supports Google Guice</li>
+      <li class="bigger"> Supports Spring</li>
+    </ul>
+    <pre><code class="java">public static void main(String[] args) throws Exception {
+    RatpackServer.start( serverSpec -> serverSpec
+      .registryOf( registrySpec -> registrySpec
+        .add( UserService.class, new AsyncUserSerivce() ) 
+      )
+      .handlers( chain -> chain
+        .get("user/:id", ctx -> {
+          Long id = ctx.getPathTokens().asLong("id");
+          ctx.get(UserService.class)
+             .getById( id )
+             .then( user -> ctx.render( json( user ) ) );
+        })
+      )
+    ); 
+  }
+</code></pre>
+</section>
+<section>
+    <h3>Dependency injection - Groovy</h3>
+     <ul class="small  ">
+      <li class="bigger"> Out-of-the-box support for Guice</li>
+      <li class="bigger"> Slightly different approach</li>
+    </ul>
+    <pre><code class="groovy">ratpack {
+  bindings {
+    bindInstance(UserService, new AsyncUserService())
+  }
+  handlers {
+    get("user/:id") { UserService userService ->
+      userService.getById( pathTokens.id ).then { user -> 
+        render( toJson( user )  )
+      }
+    }
+  }
+}
+</code></pre>
+</section>
+
+
+
+
 
 
 <link rel="stylesheet" href="highlight/styles/default.css">
