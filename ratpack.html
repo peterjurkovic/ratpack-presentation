@@ -13,11 +13,11 @@
     <h3>Agenda</h3>
     <ul>
       <li>Motivation
-      <li>Ratpack
+      <li>Ratpack - key concepts
         <ul>
-          <li> Key concepts
+          <li> Request handling
+          <li> Dependency injection
           <li> Application configuration
-          <li> Test capabilities
           <li> Promises and Executions 
           <li> Ratpack Modules
         </ul>
@@ -43,6 +43,11 @@
 <section>
     <h3>Servlet container</h3>
     <img src="servlet-container-2.png" alt="Servlet container" class="servlet-container reset" />
+</section>
+
+<section class="center">
+    <h3 style="text-align:left">PORCODIO!</h3>
+    <img src="porcodio.png" alt="Porcodio" class="servlet-container porcodio" />
 </section>
 
 <section>
@@ -200,21 +205,23 @@ ratpack {
       <li class="bigger"> Supports Google Guice</li>
       <li class="bigger"> Supports Spring</li>
     </ul>
-    <pre><code class="java">public static void main(String[] args) throws Exception {
-    RatpackServer.start( serverSpec -> serverSpec
-      .registryOf( registrySpec -> registrySpec
-        .add( UserService.class, new AsyncUserSerivce() ) 
-      )
-      .handlers( chain -> chain
-        .get("user/:id", ctx -> {
-          Long id = ctx.getPathTokens().asLong("id");
-          ctx.get(UserService.class)
-             .getById( id )
-             .then( user -> ctx.render( json( user ) ) );
-        })
-      )
-    ); 
-  }
+    <pre><code class="java">public class Server {
+  public static void main(String[] args) throws Exception {
+      RatpackServer.start( serverSpec -> serverSpec
+        .registryOf( registrySpec -> registrySpec
+          .add( UserService.class, new AsyncUserSerivce() ) 
+        )
+        .handlers( chain -> chain
+          .get("user/:id", ctx -> {
+            Long id = ctx.getPathTokens().asLong("id");
+            ctx.get(UserService.class)
+               .getById( id )
+               .then( user -> ctx.render( json( user ) ) );
+          })
+        )
+      ); 
+    }
+}
 </code></pre>
 </section>
 <section>
@@ -237,7 +244,26 @@ ratpack {
 }
 </code></pre>
 </section>
-
+<section>
+    <h3>Application configuration</h3>
+     <ul class="small  ">
+      <li class="bigger"> Out-of-the-box support for Guice</li>
+      <li class="bigger"> Slightly different approach</li>
+    </ul>
+    <pre><code class="groovy">ratpack {
+  bindings {
+    bindInstance(UserService, new AsyncUserService())
+  }
+  handlers {
+    get("user/:id") { UserService userService ->
+      userService.getById( pathTokens.id ).then { user -> 
+        render( toJson( user )  )
+      }
+    }
+  }
+}
+</code></pre>
+</section>
 
 
 
