@@ -104,7 +104,7 @@ ratpack {
     </div>
     
     <div class="ul"> 
-      <span class="li"><span class="li-numb">1</span>Groovy's dependency managment system "grab" the necessary dependencies and maie it avaiable to our runtime classpath</span>
+      <span class="li"><span class="li-numb">1</span>Groovy's dependency managment system "grab" the necessary dependencies and make it avaiable to our runtime classpath</span>
       <span class="li"><span class="li-numb">2</span>Static import of the Groovy.ratpack method provides our script with the Domain-Specific Languages (DSL)</span>
       <span class="li"><span class="li-numb">3</span>GET handler - binding a processing block for incoming HTTP GET requests</span>
     </div>
@@ -248,27 +248,178 @@ ratpack {
 }
 </code></pre>
 </section>
+
 <section>
-    <h3>Application configuration</h3>
+    <h3>Async programming</h3>
      <ul class="small  ">
-      <li class="bigger"> Out-of-the-box support for Guice</li>
-      <li class="bigger"> Slightly different approach</li>
+      <li class="bigger"> No language-level support for continuations</li>
+      <li class="bigger"> Non-deterministric data flow</li>
     </ul>
-    <pre><code class="groovy">ratpack {
-  bindings {
-    bindInstance(UserService, new AsyncUserService())
-  }
-  handlers {
-    get("user/:id") { UserService userService ->
-      userService.getById( pathTokens.id ).then { user -> 
-        render( toJson( user )  )
-      }
-    }
-  }
+    <pre><code class="java">public interface AsyncDatabaseService {
+  void findByUsername(String username, Consumer&lt;User&gt; callback);
 }
+
+RatpackServer.start(spec -> spec
+  .registry(...)
+  .handlers(chain -> chain 
+    .get(":username", ctx -> {
+      AsyncDatabaseService db = ctx.get(AsyncDatabaseService.class);
+      String username = ctx.getPathTokens("username");
+      db.findByUsername(username, user -> {
+        ctx.render( user );
+      });
+    })
+  )
+);
 </code></pre>
 </section>
 
+
+<section>
+    <h3>From imperative to async programming</h3>
+    <pre><code class="java">public interface AsyncDatabaseService {
+  void findByUsername(String username, Consumer&lt;User&gt; callback);
+  void loadUserProfile(Long profileId, Consumer&lt;UserProfile&gt; callback);
+}
+
+RatpackServer.start(spec -> spec
+  .registry(...)
+  .handlers(chain -> chain 
+    .get(":username", ctx -> {
+      AsyncDatabaseService db = ctx.get(AsyncDatabaseService.class);
+      String username = ctx.getPathTokens("username");
+
+      User;
+      db.findByUsername(username, u1 -> user = u1);
+      db.loadUserProfile(user.getProfileId(), userProfile -> { <span class="numb long" >NPE :-(</span>
+        ctx.render( userProfile );
+      });
+    })
+  )
+);
+</code></pre>
+</section>
+
+
+<section>
+    <h3>A "solution" - Nested async call</h3>
+    <ul class="small  ">
+      <li class="bigger"> Nested code blocks - difficult to mantain, leads to "Callback hell"</li>
+    </ul>
+    <pre><code class="java">public interface AsyncDatabaseService {
+  void findByUsername(String username, Consumer&lt;User&gt; callback);
+  void loadUserProfile(Long profileId, Consumer&lt;UserProfile&gt; callback);
+}
+
+RatpackServer.start(spec -> spec
+  .registry(...)
+  .handlers(chain -> chain 
+    .get(":username", ctx -> {
+      AsyncDatabaseService db = ctx.get(AsyncDatabaseService.class);
+      String username = ctx.getPathTokens("username");
+      
+      db.findByUsername(username, u1 -> {
+        db.loadUserProfile(user.getProfileId(), userProfile -> {
+          ctx.render( userProfile );
+        });
+      });
+      
+    })
+  )
+);
+</code></pre>
+</section>
+
+
+<section>
+    <h3>Promises - A better approach</h3>
+    <pre><code class="java">public interface AsyncDatabaseService {
+  Promise&lt;User&gt; findByUsername(String username);
+  Promise&lt;UserProfile&gt; loadUserProfile(Long profileId);
+}
+
+RatpackServer.start(spec -> spec
+  .registry(...)
+  .handlers(chain -> chain 
+    .get(":username", ctx -> {
+      AsyncDatabaseService db = ctx.get(AsyncDatabaseService.class);
+      String username = ctx.getPathTokens("username");
+
+      db.findByUsername(username).flatMap( user -> {  <span class="numb">1</span>
+        return db.loadUserProfile(user.getProfileId());  <span class="numb">2</span>
+      }).then( profile -> {
+        ctx.render( profile );
+      });
+      
+    })
+  )
+);
+</code></pre>
+  <div class="ul"> 
+    <span class="li"><span class="li-numb">1</span>Once the data is avaiable, it is streamed to the provided function</span>
+    <span class="li"><span class="li-numb">2</span>Transform the value of the stream by chaining the two promisses</span>
+  </div>
+</section>
+
+
+<section>
+    <h3>Promises vs Callbacks</h3>
+    <pre><code class="java">db.findByUsername(username, u1 -> {
+  db.loadUserProfile(user.getProfileId(), profile -> {
+    db.loadUserFriends(profile.getFriendsIds(), friends -> {
+      db.loadPhotosFromFriends(friends.getPhotoIds(), photos -> {
+        ctx.render( photos );
+      });
+    });
+  });
+});</code></pre>
+<h5 class="center">&nbsp;</h5>
+ <pre><code class="java">db.findByUsername(username).flatMap( user -> {
+  return db.loadUserProfile(user.getProfileId());
+}).flatMap( profile -> {
+  return db.loadUserFriends(profile.getFriendsIds());
+}).flatMap( friends -> {
+  return db.loadPhotosFromFriends(friends.getPhotoIds());
+}).then( photos -> {
+  ctx.render( photos );
+});</code></pre>
+</section>
+
+
+<section>
+  <h3>Ratpack Promise</h3>
+  <ul class="small  ">
+    <li class="bigger"> Representation of a potential value</li>
+    <li class="bigger"> Say things about the value without having it</li>
+    <li class="bigger"> Represent a processing construct that is much more aligned with the concept of a continuation - <strong>denotes a frame of the continuation</strong></li>
+    <li class="bigger"> During the invocation of each frame, the continuation is suspended until its operation returns a value (fulfilling the promise)</li>
+    <li class="bigger"> The serialization of the async calls gives - deterministic control flow</li>
+</ul>
+</section>
+
+<section>
+  <h3>Ratpack Execution Model</h3>
+  <ul class="small  ">
+    <li class="bigger"> Is an implementation of a continuation and <span class="inline"><code>Promise&lt;T&gt;</code></span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; represents <em>distinct frames</em> of the continuation.</li>
+    <li class="bigger">The processing calls that make up a stream are placed into a stack</li>
+  </ul>
+<pre><code class="java">RatpackServer.start( spec -> spec
+ .handlers( chain -> chain
+   .get( ctx -> {
+     print("1");
+     Blocking.get(() -> {
+       print("2");
+       return userService.loadUsers();
+     }).then( userList -> {
+       print("3");
+       ctx.render( userList );
+     });
+     print("4");
+   })     
+ );
+ // prints 1423</code></pre>
+</section>  
+ 
 
 
 
