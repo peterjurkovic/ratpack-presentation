@@ -61,14 +61,15 @@
 </section>
 
 <section class="center">
-  <h5 style="margin-top: 30%;font-size: 1.5em">Do I need change?</h5>
+  <h5 style="margin-top: 32%;font-size: 1.5em">Do we need change?</h5>
 </section>
 
 <section class="center">
     <img src="internet-minute-2016.png" alt="Internet in one minute" class="net-in-one-minute" />
 </section>
 
-<section class="center bsb">
+<section class="center">
+  <h5 style="margin-top: 32%;font-size: 1.5em">Is there another way?</h5>
 </section>
 
 <section>
@@ -303,8 +304,8 @@ RatpackServer.start(spec -> spec
 
 <section>
     <h3>A "solution" - Nested async call</h3>
-    <ul class="small  ">
-      <li class="bigger"> Nested code blocks - difficult to mantain, leads to "Callback hell"</li>
+    <ul class="small" style="margin-top:-2%;margin-bottom:4%;">
+      <li class="bigger"> Nested code blocks - difficult to read and mantain. "Callback hell"</li>
     </ul>
     <pre><code class="java">public interface AsyncDatabaseService {
   void findByUsername(String username, Consumer&lt;User&gt; callback);
@@ -399,8 +400,9 @@ RatpackServer.start(spec -> spec
 
 <section>
   <h3>Ratpack Execution Model</h3>
-  <ul class="small  ">
+  <ul class="small " style="margin-top:-4%;margin-bottom:2%">
     <li class="bigger"> Is an implementation of a continuation and <span class="inline"><code>Promise&lt;T&gt;</code></span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; represents <em>distinct frames</em> of the continuation.</li>
+    <li class="bigger">Processing stream is created from the async call</li>
     <li class="bigger">The processing calls that make up a stream are placed into a stack</li>
   </ul>
 <pre><code class="java">RatpackServer.start( spec -> spec
@@ -409,7 +411,7 @@ RatpackServer.start(spec -> spec
      print("1");
      Blocking.get( () -> {
        print("2");
-       return userService.loadUsers();
+       return blockingUserService.loadUsers();
      }).then( userList -> {
        print("3");
        ctx.render( userList );
@@ -418,7 +420,31 @@ RatpackServer.start(spec -> spec
    })     
  );
  // prints 1423</code></pre>
-</section>  
+</section>
+
+
+  <section>
+  <h3>Ratpack Execution Model (continued)</h3>
+  <ul class="small " style="margin-top:-4%;margin-bottom:2%">
+    <li class="bigger"> Ratpack’s execution model <strong>guarantees</strong> that the exception being thrown is the logical outcome. In fact, the background operation is never initiated.</li>
+    <li class="bigger"> Requests are smartly handled based on data, not on response-writing timeouts</li>
+    <li class="bigger"> Ratpack is said to provide <em>Thread affinity</em>
+  </ul>
+<pre><code class="java">RatpackServer.start( spec -> spec
+ .handlers( chain -> chain
+   .all( ctx -> {
+      ctx.next();
+      throw new Exception(":-)");
+   })
+   .get( ctx -> {
+     Blocking.get( () -> {
+       return blockingUserService.loadUsers();
+     }).then( userList -> {
+       ctx.render( userList );
+     });
+   })     
+ );</code></pre>
+</section>
  
 
 
