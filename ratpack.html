@@ -355,7 +355,7 @@ RatpackServer.start(spec -> spec
   )
 );
 </code></pre>
-  <div class="ul"> 
+  <div class="ul" style="margin-top: 0"> 
     <span class="li"><span class="li-numb">1</span>Once the data is avaiable, it is streamed to the provided function</span>
     <span class="li"><span class="li-numb">2</span>Transform the value of the stream by chaining the two promisses</span>
   </div>
@@ -407,7 +407,7 @@ RatpackServer.start(spec -> spec
  .handlers( chain -> chain
    .get( ctx -> {
      print("1");
-     Blocking.get(() -> {
+     Blocking.get( () -> {
        print("2");
        return userService.loadUsers();
      }).then( userList -> {
@@ -485,6 +485,7 @@ RatpackServer.start(spec -> spec
     if ( aEvent.keyCode == 39 // right arrow
       || aEvent.keyCode == 40 // down arrow
       || aEvent.keyCode == 34 // page down
+      || aEvent.keyCode == 32 // space
     ) {
       aEvent.preventDefault();
       this.forward();
@@ -497,10 +498,7 @@ RatpackServer.start(spec -> spec
       aEvent.preventDefault();
       this.goStart();
     }
-    if (aEvent.keyCode == 32) { // space
-      aEvent.preventDefault();
-      this.toggleContent();
-    }
+    
     if (aEvent.keyCode == 70) { // f
       aEvent.preventDefault();
       this.goFullscreen();
