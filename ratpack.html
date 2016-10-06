@@ -13,13 +13,13 @@
     <h3>Agenda</h3>
     <ul>
       <li>Motivation
-      <li>Ratpack - key concepts
+      <li>Ratpack
         <ul>
           <li> Request handling
           <li> Dependency injection
+          <li> Execution model
           <li> Application configuration
-          <li> Promises and Executions 
-          <li> Ratpack Modules
+          <li> Application testing
         </ul>
         <li> Reactive Streams
     </ul>
@@ -428,7 +428,7 @@ RatpackServer.start(spec -> spec
 </section>
 
 
-  <section>
+<section>
   <h3>Ratpack Execution Model (continued)</h3>
   <ul class="small " style="margin-top:-4%;margin-bottom:2%">
     <li class="bigger"> Ratpack’s execution model <strong>guarantees</strong> that the exception being thrown is the logical outcome. In fact, the background operation is never initiated.</li>
@@ -451,6 +451,74 @@ RatpackServer.start(spec -> spec
  );</code></pre>
 </section>
  
+ <section>
+  <h3>Ratpack Execution Model (continued)</h3>
+  <ul class="small " style="margin-top:-4%;margin-bottom:2%">
+    <li class="bigger"> Ratpack’s execution model <strong>guarantees</strong> that the exception being thrown is the logical outcome. In fact, the background operation is never initiated.</li>
+    <li class="bigger"> Requests are smartly handled based on data, not on response-writing timeouts</li>
+    <li class="bigger"> Ratpack is said to provide <em>Thread affinity</em>
+  </ul>
+<pre><code class="java">RatpackServer.start( spec -> spec
+ .handlers( chain -> chain
+   .all( ctx -> {
+      ctx.next();
+      throw new Exception(":-)");
+   })
+   .get( ctx -> {
+     Blocking.get( () -> {
+       return blockingUserService.loadUsers();
+     }).then( userList -> {
+       ctx.render( userList );
+     });
+   })     
+ );</code></pre>
+</section>
+
+ <section>
+  <h3>Application configuration</h3>
+  <ul class="small">
+    <li class="bigger"> Many build in config sources (Properties, YAML, System properties, Enviroment variables)</li>
+    <li class="bigger"> Parsed into a tree of Jackson's <span class="inline"><code>ObjectNodes</code></span></li>
+    <li class="bigger"> Avaiable from registries (Type safe and injectable)</li>
+    <li class="bigger"> Custom Configurationi Source (Database, Network)</li>
+  </ul>
+</section>
+
+<section>
+  <h3>Application testing</h3>
+  <ul class="small">
+    <li class="bigger"> All needed in <span class="inline"><code>ratpack-test</code></span> module</li>
+    <li class="bigger"> First-class support for Spock (BDD)</li>
+    <li class="bigger"> Handler unit testing with <span class="inline"><code>ratpack.test.handling.RequestFixture</code></span></li>
+    <li class="bigger"> Functional and intergration testing with </code></span>ApplicationUnderTest</code></span></li>
+    <li class="bigger"> Mocking external services with </code></span>EmbeddedApp</code></span></li>
+    <li class="bigger"> <strong>Impossitions</strong> allow controls over Registries and configuration</li>
+  </ul>
+</section>
+
+<section>
+  <h3>Unit Testing Standalone Handlers</h3>
+    <ul class="small">
+    <li class="bigger"> All needed in <span class="inline"><code>ratpack-test</code></span> module</li>
+    <li class="bigger"> Handler unit testing with <span class="inline"><code>ratpack.test.handling.RequestFixture</code></span></li>
+  </ul>
+
+   <pre><code class="java">@Test
+@Parameters({
+  "Microservice v1.0 | V1",
+  "Microservice v2.0 | V2",
+  "Microservice v3.0 | V3"
+})
+public void test(String actualUserAgent, ClientVersion expectedVersion){
+  Action<RequestFixture> fixture = request -> request.header("User-Agent", actualUserAgent);
+
+  HandlingResult result = RequestFixture.handle(handler, fixture);
+
+  ClientVersion actualVersion = result.getRegistry().get(ClientVersion.class);
+  assertThat(actualVersion).isEqualTo(expectedVersion);
+  assertThat(result.isCalledNext()).isTrue();
+}</code></pre>
+</section>
 
 
 
