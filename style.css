@@ -293,3 +293,40 @@ pre{
 .reduce-margin{margin-bottom:3% !important}
 
 .porcodio{width: auto !important;height: 70% !important;}
+
+.fx{margin: auto;}
+
+quote{
+  margin: 5% 5% 1% 10%;
+  display:block;  
+  font-size:.7em;
+  color:#555;
+  font-style:italic;
+  position:relative;
+}
+
+quote em{
+  font-size:1em;
+}
+quote span{
+  position:absolute;
+  bottom:-20px;
+  right:5%;
+  font-size:0.9em;
+  font-style:normal;
+  color:#000
+}
+
+p.label{font-size:.6em;margin:5% 0 2% 10%}
+div.block{
+  margin:0 5% 5% 10%;
+  border-left:5px solid #ccc;
+  font-size:.5em;
+  padding:5px 10px;
+  background:#fafafa;
+  font-family:monospace;
+  line-height:1.5em;
+}
+
+
+.rs{width:70%;margin:10% 0 0 10%}

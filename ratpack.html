@@ -224,9 +224,9 @@ ratpack {
         .handlers( chain -> chain
           .get("user/:id", ctx -> {
             Long id = ctx.getPathTokens().asLong("id");
-            ctx.get(UserService.class)
-               .getById( id )
-               .then( user -> ctx.render( json( user ) ) );
+            ctx.get(UserService.class).getById( id )
+               .map(Jackson:json)
+               .then(ctx::render);
           })
         )
       ); 
@@ -451,30 +451,7 @@ RatpackServer.start(spec -> spec
  );</code></pre>
 </section>
  
- <section>
-  <h3>Ratpack Execution Model (continued)</h3>
-  <ul class="small " style="margin-top:-4%;margin-bottom:2%">
-    <li class="bigger"> Ratpack’s execution model <strong>guarantees</strong> that the exception being thrown is the logical outcome. In fact, the background operation is never initiated.</li>
-    <li class="bigger"> Requests are smartly handled based on data, not on response-writing timeouts</li>
-    <li class="bigger"> Ratpack is said to provide <em>Thread affinity</em>
-  </ul>
-<pre><code class="java">RatpackServer.start( spec -> spec
- .handlers( chain -> chain
-   .all( ctx -> {
-      ctx.next();
-      throw new Exception(":-)");
-   })
-   .get( ctx -> {
-     Blocking.get( () -> {
-       return blockingUserService.loadUsers();
-     }).then( userList -> {
-       ctx.render( userList );
-     });
-   })     
- );</code></pre>
-</section>
-
- <section>
+<section>
   <h3>Application configuration</h3>
   <ul class="small">
     <li class="bigger"> Many build in config sources (Properties, YAML, System properties, Enviroment variables)</li>
@@ -499,7 +476,6 @@ RatpackServer.start(spec -> spec
 <section>
   <h3>Unit Testing Standalone Handlers</h3>
     <ul class="small">
-    <li class="bigger"> All needed in <span class="inline"><code>ratpack-test</code></span> module</li>
     <li class="bigger"> Handler unit testing with <span class="inline"><code>ratpack.test.handling.RequestFixture</code></span></li>
   </ul>
 
@@ -521,6 +497,140 @@ public void test(String actualUserAgent, ClientVersion expectedVersion){
 </section>
 
 
+<section>
+  <h3>Functional &amp; Integration Testing</h3>
+    <ul class="small">
+    <li class="bigger">It is Easy - Ratpack Server is embeddable</li>
+    <li class="bigger">Integration &amp; Functional testing with <span class="inline"><code>ratpack.test.ApplicationUnderTest</code></span></li>
+    <li class="bigger"><strong>Impositions</strong> allows control over configuration and registries</li>
+  </ul>
+
+   <pre><code class="java"> ApplicationUnderTest aut = new MainClassApplicationUnderTest(Server.class);
+
+  @Test
+  public void test() {
+    TestHttpClient httpClient = aut.getHttpClient().requestSpec(spec -> spec
+        .getHeaders().set("User-Agent", "Microservice v2.0")
+      );  
+    String responseText = httpClient.get().getBody().getText();
+    Assertions.assertThat(responseText).isEqualTo("Handling version: V2");
+  }
+</code></pre>
+</section>
+
+<section>
+  <h3>Sessions</h3>
+    <ul class="small">
+    <li class="bigger">No session by default</li>
+    <li class="bigger">All needed in <strong>ratpack-session</strong> module </li>
+    <li class="bigger">Designed with support for distributed sessions in mind</li>
+    <li class="bigger">Build-in implementations: <strong>In-memory</strong>, <strong>Cookie-based</strong>, <strong>Redis bcked</strong></li>
+    <li class="bigger">Easy to implement your own by implementing <span class="inline"><code>SessionStore</code></span></li>
+    <li class="bigger">Used Java serialization by default</li>
+    <li class="bigger">Customizeable by implementing <span class="inline"><code>SessionSerializer</code></span></li>
+  </ul>
+
+   <pre><code class="java">dependencies {
+  compile ratpack.dependency("session")
+}</code></pre>
+</section>
+
+<section>
+  <h3>Modules - Hystrix</h3>
+
+  <quote><em>&bdquo;</em>Hystrix is a latency and fault tolerance library designed to isolate points of access to remote systems, services and 3rd party libraries, stop cascading failure and enable resilience in complex distributed systems where failure is inevitable.
+    <em>&rdquo;</em>
+  </quote>
+
+  <p class="label">An application that depends on 30 services where each service has 99.99%</p>
+  <div class="block">
+    99.9930 = 99.7% uptime<br />
+    0.3% of 1 billion requests = 3,000,000 failures<br />
+    2+ hours downtime/month even if all dependencies have excellent uptime. 
+  </div>
+    
+  <pre><code class="java">dependencies {
+  compile ratpack.dependency("hystrix")
+}
+</code></pre>
+</section>
+
+
+<section>
+  <h3>Modules - RxJava</h3>
+
+  <quote><em>&bdquo;</em>RxJava is arguably the most popular of the reactive programming libraries available on the JVM
+    <em>&rdquo;</em>
+  </quote>
+
+<br />   
+<pre><code class="java">.get(ctx -> {
+  RxJavaUserService userService = ctx.get(RxJavaUserService.class);
+  Observable&lt;User&gt; users = userService.getAll();
+  RxRatpack.promise(users).then(users ->
+    ctx.render(json(users))
+  );
+})
+</code></pre>
+ <br />   
+<pre><code class="java">dependencies {
+  compile ratpack.dependency("rx")
+}
+</code></pre>
+</section>
+
+
+<section>
+  <h3>Modules - other</h3>
+  <ul style="margin-left:15%">
+    <li class="bigger">Consul (Ask Esther)</li>
+    <li class="bigger">Hikari</li>
+    <li class="bigger">Retrofit2</li>
+    <li class="bigger">Thymeleaf</li>
+    <li class="bigger">and more on <a href="https://github.com/ratpack/ratpack">https://github.com/ratpack</a></li>
+  </ul>
+  
+</code></pre>
+</section>
+
+<section class="center">
+  <h5 style="margin-top: 32%;font-size: 1.5em">Demo time</h5>
+  <img src="hand-cross.jpg" title="Hope it does not fail..." class="fx" />  
+</section>
+
+<section>
+  <h3>Reactive Streams</h3>
+  <quote><em>&bdquo;</em>Reactive Streams is a protocol for asynchronous stream processing with non-blocking backpresure.
+    <em>&rdquo;</em>
+    <span>Stephane Maldini, Devoxx UK 2016</span>
+  </quote>
+  <img  class="rs" src="rs.jpg" title="Reactive Streams"  />
+</code></pre>
+</section>
+
+
+<section>
+  <h3>Sources & links</h3>
+  <ul class="small">
+    <li class="bigger">BOOK: <a href="http://shop.oreilly.com/product/0636920037545.do">Learning Ratpack - O'Reilly Media</a> (Dan Woods)</li>
+    <li class="bigger"><a href="https://www.youtube.com/watch?v=WT8S-dMLSVM">Ratpack: Under the Hood</a> (Luke Delay)</li>
+    <li class="bigger"><a href="https://www.infoq.com/presentations/ratpack-2015">Ratpack Web Framework</a> (Dan Woods)</li>
+    <li class="bigger"><a href="https://www.youtube.com/watch?v=9vLhmJrdCNE">There's so much more to Ratpack than non-blocking</a> (Marcin Erdmann)</li>
+    <li class="bigger"><a href="https://www.youtube.com/watch?v=2p3IO39BK1k">Rapid Web App Development with Ratpack</a> (Dan Hyun)</li>
+    
+    <li class="bigger"><a href="https://www.youtube.com/watch?v=9vLhmJrdCNE">Reactive Spring </a> (Stephane Maldini &amp; Rossen Stoyanchev)</li>
+
+    <li class="bigger"><a href="https://www.youtube.com/watch?v=9vLhmJrdCNE">Reactive programming </a> (Stephane Maldini)</li>
+
+    
+    
+    
+  </ul>
+</section>
+
+<section class="center">
+  <h5 style="margin-top: 32%;font-size: 1.5em">Thank you</h5>
+</section>
 
 
 <link rel="stylesheet" href="highlight/styles/default.css">
